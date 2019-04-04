@@ -30,6 +30,17 @@ module ComputedCustomField
         cfs = cf_ids.each_with_object({}) do |cf_id, hash|
           hash[cf_id] = grouped_cfs[cf_id].first.cast_value '1'
         end
+
+        if record.type == 'ProjectCustomField'
+          ts = Tracker.all.map do |t|
+            fields = t.custom_fields.map do |field|
+              [field.id, 1]
+            end
+
+            [t.id, fields.to_h]
+          end.to_h
+        end
+
         eval record.formula
       end
     end

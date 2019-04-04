@@ -13,7 +13,7 @@
           $("#available_cfs").dblclick(function() {
               var formula = $("#custom_field_formula");
               $(this).find("option:selected").each(function() {
-                  formula.val(formula.val() + 'cfs[' + $(this).val() + ']');
+                  formula.val(formula.val() + $(this).val());
               });
           });
       }())

@@ -18,6 +18,7 @@ module ComputedCustomField
     # rubocop:disable Lint/UselessAssignment, Security/Eval
     def eval_computed_field(custom_field)
       cfs = parse_computed_field_formula custom_field.formula
+      ts = parse_computed_field_formula_tracker custom_field.formula
       value = eval custom_field.formula
       self.custom_field_values = {
         custom_field.id => prepare_computed_value(custom_field, value)
@@ -36,6 +37,18 @@ module ComputedCustomField
       cf_ids.each_with_object({}) do |cf_id, hash|
         cfv = @grouped_cfvs[cf_id].first
         hash[cf_id] = cfv ? cfv.custom_field.cast_value(cfv.value) : nil
+      end
+    end
+
+    def parse_computed_field_formula_tracker(formula)
+      formula.scan(/ts\[(\d+)\]\[(\d+)\]/).each_with_object({}) do |pair, hash|
+        tid = pair[0].to_i
+        fid = pair[1].to_i
+
+        sum = CustomValue.joins("join issues on issues.id = custom_values.customized_id").where(customized_type: "Issue", custom_field_id: fid).where("issues.tracker_id = ?", tid).where("custom_values.value is not null and custom_values.value <> ''").sum("cast(value as double precision)")
+
+        hash[tid] = {} if hash[tid].nil?
+        hash[tid][fid] = sum
       end
     end
 
