@@ -45,7 +45,7 @@ module ComputedCustomField
         tid = pair[0].to_i
         fid = pair[1].to_i
 
-        sum = CustomValue.joins("join issues on issues.id = custom_values.customized_id").where(customized_type: "Issue", custom_field_id: fid).where("issues.tracker_id = ?", tid).where("custom_values.value is not null and custom_values.value <> ''").sum("cast(value as double precision)")
+        sum = CustomValue.joins("join issues on issues.id = custom_values.customized_id").where("issues.project_id = ?", self.id).where(customized_type: "Issue", custom_field_id: fid).where("issues.tracker_id = ?", tid).where("custom_values.value is not null and custom_values.value <> ''").sum("cast(value as double precision)")
 
         hash[tid] = {} if hash[tid].nil?
         hash[tid][fid] = sum
