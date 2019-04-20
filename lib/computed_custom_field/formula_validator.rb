@@ -28,7 +28,7 @@ module ComputedCustomField
         grouped_cfs = CustomField.all.group_by(&:id)
         cf_ids = record.formula.scan(/cfs\[(\d+)\]/).flatten.map(&:to_i)
         cfs = cf_ids.each_with_object({}) do |cf_id, hash|
-          hash[cf_id] = grouped_cfs[cf_id].first.cast_value '1'
+          hash[cf_id] = grouped_cfs[cf_id].first.cast_value 1
         end
 
         if record.type == 'ProjectCustomField'
@@ -39,7 +39,14 @@ module ComputedCustomField
 
             [t.id, fields.to_h]
           end.to_h
+
+          ta = Tracker.all.map do |t|
+            [t.id, Issue.column_names.map {|attr| [attr.to_sym, 1]}.to_h]
+          end.to_h
+
+          ia = Issue.column_names.map {|attr| [attr.to_sym, 1]}.to_h
         end
+
 
         eval record.formula
       end

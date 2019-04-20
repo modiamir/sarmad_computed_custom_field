@@ -19,6 +19,8 @@ module ComputedCustomField
     def eval_computed_field(custom_field)
       cfs = parse_computed_field_formula custom_field.formula
       ts = parse_computed_field_formula_tracker custom_field.formula
+      ta = parse_attribute_formula_tracker custom_field.formula
+      ia = parse_attribute_formula custom_field.formula
       value = eval custom_field.formula
       self.custom_field_values = {
         custom_field.id => prepare_computed_value(custom_field, value)
@@ -49,6 +51,35 @@ module ComputedCustomField
 
         hash[tid] = {} if hash[tid].nil?
         hash[tid][fid] = sum
+      end
+    end
+
+    def parse_attribute_formula_tracker(formula)
+      formula.scan(/ta\[(\d+)\]\[:(\w+)\]/).each_with_object({}) do |pair, hash|
+        tid = pair[0].to_i
+        attr = pair[1].to_sym
+
+        sum = Issue.
+          where("issues.project_id = ?", self.id).
+          where("issues.tracker_id = ?", tid).
+          where("issues.#{attr} is not null").
+          sum("cast(issues.#{attr} as double precision)")
+
+        hash[tid] = {} if hash[tid].nil?
+        hash[tid][attr] = sum
+      end
+    end
+
+    def parse_attribute_formula(formula)
+      formula.scan(/ia\[:(\w+)\]/).each_with_object({}) do |pair, hash|
+        attr = pair[0].to_sym
+
+        sum = Issue.
+          where("issues.project_id = ?", self.id).
+          where("issues.#{attr} is not null").
+          sum("cast(issues.#{attr} as double precision)")
+
+        hash[attr] = sum
       end
     end
 
